@@ -1,16 +1,22 @@
 /**
  * Resolve Assay Module (step 0d, optional)
  *
- * Resolves one or more assay (technique) terms in EFO, with all their
- * descendants. The file is a NEGATIVE selection: the cells whose assay ontology
- * id is in it are left out of the filtered counts (for example spatial
- * techniques). Each query is a root term and must match one EFO term exactly,
- * or be an EFO id such as EFO:0008994. The step never asks a question.
+ * Resolves the assays (techniques) you WANT, each by its EFO label or EFO id.
+ * Each assay is resolved on its own: there is no root term and no descendants.
+ * The file is an allow-list: only the cells whose assay ontology id is in it are
+ * counted on the filtered side, so every other assay (for example every spatial
+ * technique) is left out by not being in the file.
+ *
+ * A label must match one EFO term exactly, or be an EFO id such as EFO:0009922.
+ * The step never asks a question. A label that does not resolve is listed under
+ * "unresolved" in the file and in the log, and is skipped. The step stops only
+ * when no assay resolves at all. Read the "unresolved" list: a label that did not
+ * resolve is left out of the counts too.
  *
  * Input:
  * ------
  * @param queries: list of assay labels or EFO ids, for example
- *                 ['spatial transcriptomics', 'MERFISH']
+ *                 ['10x 3\' v3', 'Smart-seq2', 'EFO:0009900']
  *
  * Output:
  * -------
@@ -35,7 +41,7 @@ process resolve_assay_process {
     def args = queries.collect { q -> "'" + q.toString().replace("'", "'\\''") + "'" }.join(' ')
     """
     cellxgene-harvester --run-dir . resolve-assay ${args} --output-prefix assay_${slug} < /dev/null \
-        || { echo "ERROR: every --exclude_assay value must be an exact EFO label or an EFO id." >&2; exit 1; }
+        || { echo "ERROR: no --assay value resolved. Each must be an exact EFO label or an EFO id." >&2; exit 1; }
     """
 
     stub:

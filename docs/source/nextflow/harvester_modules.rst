@@ -64,11 +64,15 @@ Count Cells Process
 
 Count Cells Module (step 5, scatter)
 
-Counts the cells of ONE dataset in the CellxGene Census, on both sides of every
+Counts the cells of ONE dataset from its h5ad file, on both sides of every
 pair: source (all cells of the dataset) and filtered (the cells that pass the
-tissue, disease and age filters, and whose assay is not in the excluded assay
-file). The dataset file is copied and the copy is updated, so the input is
-never changed.
+tissue, disease and age filters, and whose assay is in the assay file, if one
+is given). The cells that pass are written to {dataset_id}.filtered.h5ad.
+The dataset file is copied and the copy is updated, so the input is never
+changed.
+
+The h5ad file is the one given in h5ad (a local file, used for tests), else
+the address in the dataset's h5ad_url (downloaded in the task).
 
 If a dataset cannot be counted after two more tries, it is left out and the
 run goes on. Its name is in the Nextflow log.
@@ -80,17 +84,21 @@ Input:
 @param uberon:         file from resolve_uberon
 @param disease:        file from resolve_disease
 @param hsapdv:         file from resolve_hsapdv
-@param exclude_assay:  file from resolve_assay, or assets/NO_FILE for none
-@param census_version: Census release to read, for example 'latest'
+@param assay:           file from resolve_assay (the assays you want), or assets/NO_FILE for none
+@param h5ad:           a local h5ad file to read instead of the dataset's h5ad_url, or assets/NO_FILE
+@param url_prefix:     public address where the filtered h5ad files are published (a temporary
+                       choice until the location is set), or '' for none
 
 
 Output:
 ~~~~~~~
 @emit record: the counted {dataset_id}.filtered.json
+@emit h5ad:   the {dataset_id}.filtered.h5ad (none when no cell passes)
 @emit log:    the count log of the dataset
 
 **Params referenced:**
 
+- ``params.h5ad_publish_dir``
 - ``params.publish_mode``
 - ``params.run_name``
 
@@ -107,14 +115,11 @@ Export Datasets CSV Module (step 7)
 Writes the CSV that sc-nsforest-qc-nf reads (--datasets_csv): one row for each
 dataset that has cells after filtering. The JSON files stay the full record.
 
-Set curation.filter_normal to true or false in each JSON file before this
-step. The log warns how many datasets have it empty.
-
 
 Input:
 ~~~~~~
 @param folder:   folder from final_cleanup
-@param csv_name: name of the CSV, for example homo_sapiens_kidney_nsforest_datasets.csv
+@param csv_name: name of the CSV, for example homo_sapiens_kidney_harvester_final.csv
 
 
 Output:
@@ -246,6 +251,57 @@ Output:
 - ``params.run_name``
 
 
+Publish Github Process
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. rubric:: ``publish_github_process``
+
+*Source:* ``modules/harvester/publish_github.nf``
+
+Publish Module (step 8)
+
+Copies every JSON and CSV file of the run to a NEW branch of the GitHub
+repository (default NIH-NLM/nlm-ckn), for you to inspect and merge by hand.
+Nothing is pushed to main.
+
+Branch:  {YYYY-mon-DD}-{HHmm}-{organ}-cellxgene-harvester-nf
+         for example 2026-oct-07-1415-kidney-cellxgene-harvester-nf
+
+
+Folders (publish_env = prod, the default):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  data/prod/{organ}/cellxgene-harvester-nf/            the JSON and CSV files
+  The filtered h5ad files go to the public S3 bucket, not to GitHub.
+
+
+Folders (publish_env = test):
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  data/test/{organ}/cellxgene-harvester-nf/            the JSON and CSV files
+  data/test/{organ}/filtered-h5ad/                     the filtered h5ad files
+
+The step is skipped, with a warning, when github_token is not given.
+
+
+Input:
+~~~~~~
+@param files:  the JSON and CSV files and the folder of dataset files of the run
+@param h5ad:   the filtered h5ad files (copied only when publish_env is test)
+@param branch: name of the branch to create
+@param organ:  organ slug, for example 'kidney'
+
+
+Output:
+~~~~~~~
+@emit report: publish_report.txt (branch and folders)
+
+**Params referenced:**
+
+- ``params.github_token``
+- ``params.publish_dest_dir``
+- ``params.publish_env``
+- ``params.publish_repo``
+
+
 Resolve Assay Process
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -255,17 +311,23 @@ Resolve Assay Process
 
 Resolve Assay Module (step 0d, optional)
 
-Resolves one or more assay (technique) terms in EFO, with all their
-descendants. The file is a NEGATIVE selection: the cells whose assay ontology
-id is in it are left out of the filtered counts (for example spatial
-techniques). Each query is a root term and must match one EFO term exactly,
-or be an EFO id such as EFO:0008994. The step never asks a question.
+Resolves the assays (techniques) you WANT, each by its EFO label or EFO id.
+Each assay is resolved on its own: there is no root term and no descendants.
+The file is an allow-list: only the cells whose assay ontology id is in it are
+counted on the filtered side, so every other assay (for example every spatial
+technique) is left out by not being in the file.
+
+A label must match one EFO term exactly, or be an EFO id such as EFO:0009922.
+The step never asks a question. A label that does not resolve is listed under
+"unresolved" in the file and in the log, and is skipped. The step stops only
+when no assay resolves at all. Read the "unresolved" list: a label that did not
+resolve is left out of the counts too.
 
 
 Input:
 ~~~~~~
 @param queries: list of assay labels or EFO ids, for example
-                ['spatial transcriptomics', 'MERFISH']
+                ['10x 3\' v3', 'Smart-seq2', 'EFO:0009900']
 
 
 Output:
