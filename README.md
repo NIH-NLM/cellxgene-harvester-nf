@@ -1,4 +1,5 @@
 [![Build and Deploy Sphinx Documentation](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/docs.yml/badge.svg)](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/docs.yml)
+[![Mini kidney test](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/mini-test.yml/badge.svg)](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/mini-test.yml)
 
 # cellxgene-harvester-nf
 
