@@ -1,3 +1,5 @@
+[![Build and Deploy Sphinx Documentation](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/docs.yml/badge.svg)](https://github.com/NIH-NLM/cellxgene-harvester-nf/actions/workflows/docs.yml)
+
 # cellxgene-harvester-nf
 
 Nextflow workflow for [cellxgene-harvester](https://github.com/NIH-NLM/cellxgene-harvester). It finds the CellxGene datasets of one organ, one disease state and one age range, and counts their cells from the h5ad file of each dataset, writing the cells that pass the filters to a new h5ad file. Every choice is a parameter.
