@@ -1,0 +1,90 @@
+name: Mini kidney test
+
+# Manual. Actions tab > "Mini kidney test" > Run workflow.
+#
+# Runs the whole workflow on ONE kidney dataset, reading the mini h5ad file
+# (3566 cells, nlm-ckn/data/test/kidney/h5ad). The resolve steps call OLS4. No
+# other h5ad file is downloaded.
+#
+# harvester_image must hold the h5ad counting (cellxgene-harvester after
+# 2026-10-07). It is built automatically on every commit to cellxgene-harvester
+# (Actions > "Build and Publish Docker image to GHCR"). The image is tagged
+# <branch name> and sha-<first 7 letters of the commit>.
+#
+# With publish ticked, the results are also pushed to a new branch of
+# NIH-NLM/nlm-ckn under data/test/kidney/ (needs the secret NLM_CKN_TOKEN).
+
+on:
+  workflow_dispatch:
+    inputs:
+      harvester_image:
+        description: 'cellxgene-harvester image'
+        default: 'ghcr.io/nih-nlm/cellxgene-harvester:latest'
+      publish:
+        description: 'Also publish the results to a branch of NIH-NLM/nlm-ckn (data/test/kidney)'
+        type: boolean
+        default: false
+
+jobs:
+  mini-kidney:
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: '26.04.4'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Nextflow
+        run: |
+          curl -s https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Get the mini kidney h5ad file
+        run: |
+          curl -sL -o minilake.h5ad.tar.gz \
+            https://github.com/NIH-NLM/nlm-ckn/raw/main/data/test/kidney/h5ad/minilake.h5ad.tar.gz
+          tests/get_mini_h5ad.sh minilake.h5ad.tar.gz tests/data/mini
+
+      - name: Run the workflow
+        env:
+          TOKEN: ${{ secrets.NLM_CKN_TOKEN }}
+        run: |
+          H5AD=$(find tests/data/mini -name '*.h5ad' | head -1)
+          PUBLISH=""
+          if [ "${{ inputs.publish }}" = "true" ]; then PUBLISH="--github_token $TOKEN"; fi
+          nextflow run main.nf -profile test \
+            --h5ad "$H5AD" \
+            --container "${{ inputs.harvester_image }}" \
+            $PUBLISH
+
+      - name: Check the results
+        run: |
+          python3 - <<'PY'
+          import csv, glob, json
+          records = glob.glob("test-run/homo_sapiens_kidney_harvester/*.filtered.json")
+          assert len(records) == 1, records
+          r = json.load(open(records[0]))
+          assert r["source_cell_count"] == 3566, r["source_cell_count"]
+          assert 0 < r["filtered_cell_count"] <= 3566, r["filtered_cell_count"]
+          assert r["filtered_h5ad_url"], "no filtered_h5ad_url"
+          assert len(glob.glob("test-run/filtered_h5ad/*.filtered.h5ad")) == 1
+          rows = list(csv.DictReader(open("test-run/homo_sapiens_kidney_harvester_final.csv")))
+          assert len(rows) == 1 and rows[0]["h5ad_url"] == r["filtered_h5ad_url"]
+          print("source", r["source_cell_count"], "filtered", r["filtered_cell_count"])
+          PY
+
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-kidney-results
+          path: |
+            test-run/
+            .nextflow.log

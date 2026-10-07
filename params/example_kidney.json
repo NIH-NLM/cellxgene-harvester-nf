@@ -1,10 +1,22 @@
 {
-  "organ":          "kidney",
-  "disease":        "normal",
-  "min_age":        15,
-  "exclude_assay":  ["spatial transcriptomics", "MERFISH"],
-  "organism":       "Homo sapiens",
-  "no_preprints":   true,
-  "census_version": "latest",
-  "run_name":       "2026-10-06-run"
+  "organ": "kidney",
+  "disease": "normal",
+  "min_age": 15,
+  "assay": [
+    "10x 3' v3",
+    "10x 3' v2",
+    "10x 5' v1",
+    "10x 5' v2",
+    "10x 3' v1",
+    "CEL-seq2",
+    "10x 5' transcription profiling",
+    "Smart-seq2",
+    "Seq-Well S3",
+    "microwell-seq",
+    "BD Rhapsody Targeted mRNA",
+    "10x multiome"
+  ],
+  "organism": "Homo sapiens",
+  "no_preprints": true,
+  "run_name": "2026-10-06-run"
 }

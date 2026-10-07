@@ -4,7 +4,7 @@ cellxgene-harvester-nf Documentation
 ``cellxgene-harvester-nf`` is a Nextflow workflow for
 `cellxgene-harvester <https://github.com/NIH-NLM/cellxgene-harvester>`_.
 It finds the CellxGene datasets of one organ, one disease state and one age
-range, and counts their cells in the CellxGene Census. Every choice is a
+range, and counts their cells from each dataset's h5ad file. Every choice is a
 parameter, and every result goes to one run folder named by its date.
 
 It writes the list of datasets that
@@ -40,7 +40,7 @@ Quick Start
        --organ         kidney \
        --disease       normal \
        --min_age       15 \
-       --exclude_assay "spatial transcriptomics,MERFISH" \
+       --assay         "10x 3' v3,10x 3' v2,Smart-seq2" \
        --no_preprints  true
 
 Everything goes to ``<run_name>/``, for example ``2026-10-06-run/``, in the
@@ -59,7 +59,7 @@ Repository Structure
    │   └── source/
    ├── modules/harvester/              # one Nextflow process for each step
    ├── params/example_kidney.json      # an example parameter file
-   ├── tests/data/                     # small files for the test profile
+   ├── tests/data/                     # one-row dataset list and the mini h5ad script
    ├── main.nf                         # Workflow entry point
    └── nextflow.config                 # Default parameters and container config
 

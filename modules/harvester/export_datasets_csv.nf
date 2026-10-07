@@ -4,13 +4,10 @@
  * Writes the CSV that sc-nsforest-qc-nf reads (--datasets_csv): one row for each
  * dataset that has cells after filtering. The JSON files stay the full record.
  *
- * Set curation.filter_normal to true or false in each JSON file before this
- * step. The log warns how many datasets have it empty.
- *
  * Input:
  * ------
  * @param folder:   folder from final_cleanup
- * @param csv_name: name of the CSV, for example homo_sapiens_kidney_nsforest_datasets.csv
+ * @param csv_name: name of the CSV, for example homo_sapiens_kidney_harvester_final.csv
  *
  * Output:
  * -------

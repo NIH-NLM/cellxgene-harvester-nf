@@ -4,3 +4,4 @@ work/
 *-run/
 .DS_Store
 docs/build/
+tests/data/mini/
