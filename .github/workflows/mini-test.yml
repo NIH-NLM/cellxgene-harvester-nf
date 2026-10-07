@@ -56,7 +56,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.NLM_CKN_TOKEN }}
         run: |
-          H5AD=$(find tests/data/mini -name '*.h5ad' | head -1)
+          H5AD=$(find tests/data/mini -name '*.h5ad' -not -name '._*' | head -1)
           PUBLISH=""
           if [ "${{ inputs.publish }}" = "true" ]; then PUBLISH="--github_token $TOKEN"; fi
           nextflow run main.nf -profile test \

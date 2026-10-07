@@ -7,4 +7,4 @@ tar_file="${1:?give the path of minilake.h5ad.tar.gz (nlm-ckn/data/test/kidney/h
 out="${2:-tests/data/mini}"
 mkdir -p "$out"
 tar -xzf "$tar_file" -C "$out"
-find "$out" -name '*.h5ad'
+find "$out" -name '*.h5ad' -not -name '._*'
