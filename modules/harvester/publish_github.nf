@@ -32,7 +32,7 @@
 process publish_github_process {
     tag "publish_${organ}"
     maxForks 1
-    errorStrategy 'ignore'
+    // no errorStrategy 'ignore': a failed publish must show its error
 
     input:
     path files, stageAs: 'run/*'
@@ -51,8 +51,13 @@ process publish_github_process {
     def repo_url  = repo.contains('://') ? repo : "https://\${GITHUB_TOKEN}@github.com/${repo}.git"   // a full address is for tests
     """
     export GITHUB_TOKEN="${params.github_token}"
+    case "\${GITHUB_TOKEN}" in
+        ""|true|false|null)
+            echo "ERROR: github_token is empty. In GitHub Actions the secret NLM_CKN_TOKEN is not set (Settings > Secrets and variables > Actions)." >&2
+            exit 1 ;;
+    esac
 
-    git clone --depth 1 ${repo_url} publish-repo
+    git clone --depth 1 ${repo_url} publish-repo 2>&1 | sed "s/\${GITHUB_TOKEN}/***/g" ; test -d publish-repo/.git || { echo "ERROR: cannot clone ${repo}: check that the token can read it" >&2; exit 1; }
     cd publish-repo
     git config user.email "cellxgene-harvester-nf@noreply.github.com"
     git config user.name  "cellxgene-harvester-nf"
@@ -66,7 +71,7 @@ process publish_github_process {
 
     git add data/
     git commit -m "cellxgene-harvester-nf: ${organ} ${params.publish_env} results (${branch})"
-    git push origin ${branch}
+    git push origin ${branch} 2>&1 | sed "s/\${GITHUB_TOKEN}/***/g"; test \${PIPESTATUS[0]} -eq 0 || { echo "ERROR: cannot push ${branch} to ${repo}: the token needs write access (contents: write)" >&2; exit 1; }
 
     echo "branch : ${branch}"   >  ../publish_report.txt
     echo "repo   : ${repo}"     >> ../publish_report.txt
