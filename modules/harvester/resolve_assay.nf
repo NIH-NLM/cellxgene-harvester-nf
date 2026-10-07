@@ -47,8 +47,10 @@ process resolve_assay_process {
     stub:
     def slug = queries[0].toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     """
-    echo '{"queries": ["${queries[0]}"], "root_terms": [{"obo_id": "EFO:0000000", "label": "${queries[0]}", "level": "root"}], "obo_ids": ["EFO:0000000"], "terms": [], "total": 1}' > assay_${slug}.json
-    printf 'obo_id,label,level\\nEFO:0000000,${queries[0]},root\\n' > assay_${slug}.csv
+    cat > assay_${slug}.json <<'STUB_END'
+    {"queries": ["stub"], "assays": [{"query": "stub", "obo_id": "EFO:0000000", "label": "stub"}], "unresolved": [], "obo_ids": ["EFO:0000000"], "total": 1}
+    STUB_END
+    printf 'obo_id,label,query\\nEFO:0000000,stub,stub\\n' > assay_${slug}.csv
     touch assay_${slug}.log
     """
 }
