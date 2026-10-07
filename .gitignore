@@ -1,0 +1,6 @@
+.nextflow/
+.nextflow.log*
+work/
+*-run/
+.DS_Store
+docs/build/

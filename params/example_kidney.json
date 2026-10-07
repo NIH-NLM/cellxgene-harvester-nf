@@ -1,0 +1,10 @@
+{
+  "organ":          "kidney",
+  "disease":        "normal",
+  "min_age":        15,
+  "exclude_assay":  ["spatial transcriptomics", "MERFISH"],
+  "organism":       "Homo sapiens",
+  "no_preprints":   true,
+  "census_version": "latest",
+  "run_name":       "2026-10-06-run"
+}
