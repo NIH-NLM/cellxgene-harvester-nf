@@ -179,4 +179,4 @@ The default branch is protected by the organization ruleset: change it through a
 
 ## License and security
 
-Creative Commons (see `LICENSE.md`). Report vulnerabilities as described in `SECURITY.md`.
+MIT License (see `LICENSE.md`). Report vulnerabilities as described in `SECURITY.md`.
