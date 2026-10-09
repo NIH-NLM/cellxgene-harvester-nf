@@ -2,6 +2,7 @@
   "organ": "kidney",
   "disease": "normal",
   "min_age": 15,
+  "assay_name": "published",
   "assay": [
     "10x 3' v3",
     "10x 3' v2",

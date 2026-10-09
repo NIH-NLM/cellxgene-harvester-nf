@@ -78,8 +78,10 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | `h5ad_url_prefix` | none | **Temporary, to be set.** Public address of that folder. Written to `filtered_h5ad_url` in each file and to `h5ad_url` in the CSV that sc-nsforest-qc-nf reads. When none, the local path |
 | `github_token` | none | A token that can push to `publish_repo`. Without it, step 8 (publish) is skipped with a warning |
 | `publish_repo` | `NIH-NLM/nlm-ckn` | Repository that gets the new branch |
-| `publish_env` | `prod` | `prod`: JSON and CSV files to `data/prod/<organ>/cellxgene-harvester-nf/`. `test` (set by the test profile): the same under `data/test/<organ>/cellxgene-harvester-nf/`, and the filtered h5ad files to `data/test/<organ>/filtered-h5ad/` |
-| `publish_dest_dir` | none | Replaces the JSON and CSV folder above |
+| `publish_env` | `prod` | `prod`: the final JSON and CSV (and the organ's uberon files) to `data/prod/<organ>/cellxgene-harvester-nf/`, and the disease, hsapdv and assay files to `data/prod/ontology_lookup_server/`. `test` (set by the test profile): the same under `data/test/`, and the filtered h5ad files to `data/test/<organ>/filtered-h5ad/` |
+| `publish_dest_dir` | none | Replaces the organ folder above |
+| `publish_shared_dir` | none | Replaces the `ontology_lookup_server` folder above |
+| `assay_name` | `published` | Name of the assay file, `assay_<assay_name>.json` and `.csv`. Name the set of assays, not its first label. Another set of assays gets another name |
 | `uberon_json` | none | A file from `resolve-uberon`, used instead of resolving |
 | `disease_json` | none | A file from `resolve-disease` |
 | `hsapdv_json` | none | A file from `resolve-hsapdv` |
@@ -101,14 +103,15 @@ Everything goes to the run folder, `<run_name>/`, in the folder where you starte
 uberon_<organ>.json .csv .log          the resolve files (step 0)
 disease_<state>.json .csv .log
 hsapdv_adult_<age>.json .csv .log
-assay_<first label>.json .csv .log     only with assay (the assays that resolved, and the unresolved labels)
+assay_<assay_name>.json .csv .log      only with assay (default assay_published: the assays that resolved, and the unresolved labels)
 collections_metadata.json              steps 1 to 3, only if they ran
 all_datasets.csv
 all_datasets_complete.csv
 datasets.filter.log                    step 4
-<organism>_<organ>_harvester/          one <dataset_id>.filtered.json for each dataset that has cells (step 6)
+<organism>_<organ>_harvester/          working folder: one <dataset_id>.filtered.json for each dataset that has cells (step 6). Not published
 <organism>_<organ>_harvester.cleanup.log
 <organism>_<organ>_harvester_final.csv   the list for sc-nsforest-qc-nf (step 7)
+<organism>_<organ>_harvester_final.json  one JSON array with the full record of the same datasets (step 7), next to the CSV
 <organism>_<organ>_harvester_final.log
 filtered_h5ad/<dataset_id>.filtered.h5ad  the cells that pass the filters (step 5; the folder is h5ad_publish_dir when it is given)
 logs/<dataset_id>.filtered.json.count.log  the count log of each dataset
@@ -136,7 +139,15 @@ No number in these files has a thousands comma: a count is written as `11464`.
 
 ## Publishing (step 8)
 
-With `--github_token`, the run ends by pushing every JSON and CSV file (the dataset files, the final CSV and the resolve files) to a new branch of `publish_repo`. Nothing goes to `main`. You inspect the branch and merge it by hand. The branch is named by date, time and organ, for example `2026-oct-07-1415-kidney-cellxgene-harvester-nf`. In `prod` the filtered h5ad files are not put in GitHub: they go to the public S3 folder (`h5ad_publish_dir`, `h5ad_url_prefix`), which is not set yet.
+With `--github_token`, the run ends by pushing the final files and the resolve files to a new branch of `publish_repo`, in two places:
+
+```
+data/<env>/<organ>/cellxgene-harvester-nf/   <organism>_<organ>_harvester_final.json and .csv, uberon_<organ>.json and .csv (all at one level)
+data/<env>/ontology_lookup_server/           disease_*.json/.csv, hsapdv_adult_*.json/.csv, assay_<assay_name>.json/.csv (shared by every organ)
+data/test/<organ>/filtered-h5ad/             the filtered h5ad files (test only)
+```
+
+`<env>` is `prod` or `test` (`publish_env`). The per-dataset working folder is not published. A resolve file given as `uberon_json`, `disease_json`, `hsapdv_json` or `assay_json` is published with its CSV when the CSV is next to it. Nothing goes to `main`. You inspect the branch and merge it by hand. The branch is named by date, time and organ, for example `2026-oct-07-1415-kidney-cellxgene-harvester-nf`. In `prod` the filtered h5ad files are not put in GitHub: they go to the public S3 folder (`h5ad_publish_dir`, `h5ad_url_prefix`), which is not set yet.
 
 ## Profiles
 

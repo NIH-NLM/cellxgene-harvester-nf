@@ -77,6 +77,15 @@ jobs:
           assert len(glob.glob("test-run/filtered_h5ad/*.filtered.h5ad")) == 1
           rows = list(csv.DictReader(open("test-run/homo_sapiens_kidney_harvester_final.csv")))
           assert len(rows) == 1 and rows[0]["h5ad_url"] == r["filtered_h5ad_url"]
+          # the final JSON is named like the CSV, in the same folder, and holds the same dataset
+          final = json.load(open("test-run/homo_sapiens_kidney_harvester_final.json"))
+          assert isinstance(final, list) and len(final) == 1, final
+          assert final[0]["dataset"]["dataset_id"] == rows[0]["dataset_id"]
+          assert final[0]["filtered_cell_count"] == r["filtered_cell_count"]
+          # the shared resolve files, JSON and CSV, include the assay file named for the set
+          for name in ("disease_normal", "hsapdv_adult_15", "assay_published"):
+              for ext in (".json", ".csv"):
+                  assert glob.glob(f"test-run/{name}{ext}"), name + ext
           print("source", r["source_cell_count"], "filtered", r["filtered_cell_count"])
           PY
 

@@ -11,8 +11,8 @@
  *   5      count the cells of each dataset from its h5ad file and write the filtered
  *          h5ad file                                       (one task for each dataset)
  *   6      delete the datasets that have no cells after filtering
- *   7      write the CSV that sc-nsforest-qc-nf reads
- *   8      publish the JSON and CSV files to a new branch of the GitHub repository (needs --github_token)
+ *   7      write the final CSV (read by sc-nsforest-qc-nf) and the final JSON, side by side
+ *   8      publish them, and the resolve files, to a new branch of the GitHub repository (needs --github_token)
  *
  * All the choices are parameters; see nextflow.config and the README.
  */
@@ -29,6 +29,12 @@ include { count_cells_process }       from './modules/harvester/count_cells.nf'
 include { final_cleanup_process }     from './modules/harvester/final_cleanup.nf'
 include { export_datasets_csv_process } from './modules/harvester/export_datasets_csv.nf'
 include { publish_github_process }    from './modules/harvester/publish_github.nf'
+
+// A resolve file given as a parameter is published with its CSV when the CSV is next to it.
+def sibling_csv(json_path) {
+    def csv_file = file(json_path.toString().replaceAll(/\.json$/, '.csv'))
+    return csv_file.exists() ? channel.value(csv_file) : channel.empty()
+}
 
 workflow {
 
@@ -51,37 +57,53 @@ workflow {
 
     // ---- step 0: the resolve files ---------------------------------------------------
     def uberon_ch
+    def uberon_csv
     if (params.uberon_json) {
-        uberon_ch = channel.value(file(params.uberon_json, checkIfExists: true))
+        uberon_ch  = channel.value(file(params.uberon_json, checkIfExists: true))
+        uberon_csv = sibling_csv(params.uberon_json)
     }
     else {
-        uberon_ch = resolve_uberon_process(params.organ).json.first()
+        def resolved = resolve_uberon_process(params.organ)
+        uberon_ch  = resolved.json.first()
+        uberon_csv = resolved.csv
     }
 
     def disease_ch
+    def disease_csv
     if (params.disease_json) {
-        disease_ch = channel.value(file(params.disease_json, checkIfExists: true))
+        disease_ch  = channel.value(file(params.disease_json, checkIfExists: true))
+        disease_csv = sibling_csv(params.disease_json)
     }
     else {
-        disease_ch = resolve_disease_process(params.disease).json.first()
+        def resolved = resolve_disease_process(params.disease)
+        disease_ch  = resolved.json.first()
+        disease_csv = resolved.csv
     }
 
     def hsapdv_ch
+    def hsapdv_csv
     if (params.hsapdv_json) {
-        hsapdv_ch = channel.value(file(params.hsapdv_json, checkIfExists: true))
+        hsapdv_ch  = channel.value(file(params.hsapdv_json, checkIfExists: true))
+        hsapdv_csv = sibling_csv(params.hsapdv_json)
     }
     else {
-        hsapdv_ch = resolve_hsapdv_process(params.min_age).json.first()
+        def resolved = resolve_hsapdv_process(params.min_age)
+        hsapdv_ch  = resolved.json.first()
+        hsapdv_csv = resolved.csv
     }
 
     // optional: the assays you want (an allow-list); every other assay is left out
     def assay_ch
+    def assay_csv = channel.empty()
     if (params.assay_json) {
-        assay_ch = channel.value(file(params.assay_json, checkIfExists: true))
+        assay_ch  = channel.value(file(params.assay_json, checkIfExists: true))
+        assay_csv = sibling_csv(params.assay_json)
     }
     else if (params.assay) {
         def assays = params.assay instanceof List ? params.assay : params.assay.toString().split(',').collect { s -> s.trim() }
-        assay_ch = resolve_assay_process(channel.value(assays)).json.first()
+        def resolved = resolve_assay_process(channel.value(assays))
+        assay_ch  = resolved.json.first()
+        assay_csv = resolved.csv
     }
     else {
         assay_ch = channel.value(file("${projectDir}/assets/NO_FILE"))
@@ -122,11 +144,17 @@ workflow {
     if (params.github_token) {
         def stamp  = new java.text.SimpleDateFormat("yyyy-MMM-dd-HHmm").format(new Date()).toLowerCase()
         def branch = "${stamp}-${organ_slug}-cellxgene-harvester-nf"
-        def files  = cleaned.folder
-            .mix(exported.csv, uberon_ch, disease_ch, hsapdv_ch)
-            .mix(params.assay || params.assay_json ? assay_ch : channel.empty())
+        // the organ folder: the final JSON and CSV, and the organ's resolve files
+        def organ_files  = exported.json.mix(exported.csv, uberon_ch, uberon_csv).collect()
+        // ontology_lookup_server: the files shared by every organ
+        def shared_files = disease_ch.mix(disease_csv, hsapdv_ch, hsapdv_csv)
+            .mix(params.assay || params.assay_json ? assay_ch : channel.empty(), assay_csv)
             .collect()
-        publish_github_process(files, counted.h5ad.collect().ifEmpty(file("${projectDir}/assets/NO_FILE")), branch, organ_slug)
+        publish_github_process(
+            organ_files, shared_files,
+            counted.h5ad.collect().ifEmpty(file("${projectDir}/assets/NO_FILE")),
+            branch, organ_slug
+        )
     }
     else {
         log.warn "--github_token not set: the results are not published to GitHub"
