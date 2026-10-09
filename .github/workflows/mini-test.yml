@@ -85,6 +85,15 @@ jobs:
           # the assay choice is recorded in the filter choices, and every facet is a list of term
           # objects whose counts are named for their side
           assert final[0]["filter_choices"]["assay"]["assays"], "no assay choice recorded"
+          # the organ block is in the CSV too, so a table says which organ its rows belong to
+          assert rows[0]["organ"] == "kidney" and rows[0]["organ_uberon_id"] == "UBERON:0002113", rows[0]
+          assert final[0]["organ"] == {"name": "kidney", "uberon_id": "UBERON:0002113"}
+          # the Lake 2023 kidney dataset is the reference dataset of the kidney
+          assert final[0]["curation"]["reference"] == "yes" and rows[0]["reference"] == "yes"
+          # the author cell type and the embedding given in the test profile
+          assert final[0]["curation"]["author_cell_type"] == "subclass.full", final[0]["curation"]
+          assert final[0]["curation"]["embedding"] == "X_umap", final[0]["curation"]
+          assert rows[0]["author_cell_type"] == "subclass.full" and rows[0]["embedding"] == "X_umap"
           for facet in ("tissue", "assay", "cell_type", "disease", "development_stage", "sex"):
               src, fil = final[0][f"source_{facet}"], final[0][f"filtered_{facet}"]
               assert all(list(t) == ["ontology_id", "label", "source_count"] for t in src), facet

@@ -124,7 +124,8 @@ workflow {
     // ---- step 4: filter the datasets -----------------------------------------------
     def filtered = filter_datasets_process(
         complete_ch, uberon_ch, disease_ch, hsapdv_ch, assay_ch,
-        params.organism ?: '', params.no_preprints ? true : false
+        params.organism ?: '', params.no_preprints ? true : false,
+        params.author_cell_type ?: '', params.embedding ?: ''
     )
 
     // ---- step 5: count the cells, one task for each dataset ----------------------------
