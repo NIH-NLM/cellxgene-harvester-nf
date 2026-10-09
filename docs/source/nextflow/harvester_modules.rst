@@ -110,10 +110,13 @@ Export Datasets Csv Process
 
 *Source:* ``modules/harvester/export_datasets_csv.nf``
 
-Export Datasets CSV Module (step 7)
+Export Final Files Module (step 7)
 
-Writes the CSV that sc-nsforest-qc-nf reads (--datasets_csv): one row for each
-dataset that has cells after filtering. The JSON files stay the full record.
+Writes two files side by side, named alike:
+  {name}_final.csv   read by sc-nsforest-qc-nf (--datasets_csv): one row for each
+                     dataset that has cells after filtering
+  {name}_final.json  one JSON array with the full record of the same datasets,
+                     in the same order
 
 
 Input:
@@ -124,8 +127,9 @@ Input:
 
 Output:
 ~~~~~~~
-@emit csv: the datasets CSV
-@emit log: the export log
+@emit csv:  the final CSV
+@emit json: the final JSON, named like the CSV
+@emit log:  the export log
 
 **Params referenced:**
 
@@ -260,9 +264,9 @@ Publish Github Process
 
 Publish Module (step 8)
 
-Copies every JSON and CSV file of the run to a NEW branch of the GitHub
-repository (default NIH-NLM/nlm-ckn), for you to inspect and merge by hand.
-Nothing is pushed to main.
+Copies the final files and the resolve files of the run to a NEW branch of the
+GitHub repository (default NIH-NLM/nlm-ckn), for you to inspect and merge by
+hand. Nothing is pushed to main. The per-dataset working files are not published.
 
 Branch:  {YYYY-mon-DD}-{HHmm}-{organ}-cellxgene-harvester-nf
          for example 2026-oct-07-1415-kidney-cellxgene-harvester-nf
@@ -270,24 +274,26 @@ Branch:  {YYYY-mon-DD}-{HHmm}-{organ}-cellxgene-harvester-nf
 
 Folders (publish_env = prod, the default):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  data/prod/{organ}/cellxgene-harvester-nf/            the JSON and CSV files
+  data/prod/{organ}/cellxgene-harvester-nf/    the final JSON and CSV, and the
+                                               organ's uberon JSON and CSV, all at
+                                               the same level (no subfolder)
+  data/prod/ontology_lookup_server/            the disease, hsapdv and assay JSON
+                                               and CSV files shared by every organ
   The filtered h5ad files go to the public S3 bucket, not to GitHub.
 
-
-Folders (publish_env = test):
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  data/test/{organ}/cellxgene-harvester-nf/            the JSON and CSV files
-  data/test/{organ}/filtered-h5ad/                     the filtered h5ad files
+Folders (publish_env = test): the same under data/test/, and
+  data/test/{organ}/filtered-h5ad/             the filtered h5ad files
 
 The step is skipped, with a warning, when github_token is not given.
 
 
 Input:
 ~~~~~~
-@param files:  the JSON and CSV files and the folder of dataset files of the run
-@param h5ad:   the filtered h5ad files (copied only when publish_env is test)
-@param branch: name of the branch to create
-@param organ:  organ slug, for example 'kidney'
+@param organ_files:  the final JSON and CSV and the organ's resolve files
+@param shared_files: the disease, hsapdv and assay resolve files (JSON and CSV)
+@param h5ad:         the filtered h5ad files (copied only when publish_env is test)
+@param branch:       name of the branch to create
+@param organ:        organ slug, for example 'kidney'
 
 
 Output:
@@ -300,6 +306,7 @@ Output:
 - ``params.publish_dest_dir``
 - ``params.publish_env``
 - ``params.publish_repo``
+- ``params.publish_shared_dir``
 
 
 Resolve Assay Process
@@ -323,6 +330,10 @@ The step never asks a question. A label that does not resolve is listed under
 when no assay resolves at all. Read the "unresolved" list: a label that did not
 resolve is left out of the counts too.
 
+The file is named for the set of assays, by the assay_name parameter (default
+'published'), not for its first label: a set of 12 assays would otherwise be
+named after one of them.
+
 
 Input:
 ~~~~~~
@@ -332,12 +343,13 @@ Input:
 
 Output:
 ~~~~~~~
-@emit json: assay_{first label}.json
-@emit csv:  assay_{first label}.csv
-@emit log:  assay_{first label}.log
+@emit json: assay_{assay_name}.json (default assay_published.json)
+@emit csv:  assay_{assay_name}.csv
+@emit log:  assay_{assay_name}.log
 
 **Params referenced:**
 
+- ``params.assay_name``
 - ``params.publish_mode``
 - ``params.run_name``
 

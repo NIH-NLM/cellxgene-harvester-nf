@@ -13,6 +13,10 @@
  * when no assay resolves at all. Read the "unresolved" list: a label that did not
  * resolve is left out of the counts too.
  *
+ * The file is named for the set of assays, by the assay_name parameter (default
+ * 'published'), not for its first label: a set of 12 assays would otherwise be
+ * named after one of them.
+ *
  * Input:
  * ------
  * @param queries: list of assay labels or EFO ids, for example
@@ -20,12 +24,12 @@
  *
  * Output:
  * -------
- * @emit json: assay_{first label}.json
- * @emit csv:  assay_{first label}.csv
- * @emit log:  assay_{first label}.log
+ * @emit json: assay_{assay_name}.json (default assay_published.json)
+ * @emit csv:  assay_{assay_name}.csv
+ * @emit log:  assay_{assay_name}.log
  */
 process resolve_assay_process {
-    tag "resolve_assay_${queries[0]}"
+    tag "resolve_assay_${params.assay_name}"
     publishDir "${params.run_name}", mode: params.publish_mode
 
     input:
@@ -37,7 +41,7 @@ process resolve_assay_process {
     path "assay_*.log",  emit: log
 
     script:
-    def slug = queries[0].toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
+    def slug = params.assay_name.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     def args = queries.collect { q -> "'" + q.toString().replace("'", "'\\''") + "'" }.join(' ')
     """
     cellxgene-harvester --run-dir . resolve-assay ${args} --output-prefix assay_${slug} < /dev/null \
@@ -45,7 +49,7 @@ process resolve_assay_process {
     """
 
     stub:
-    def slug = queries[0].toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
+    def slug = params.assay_name.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     """
     cat > assay_${slug}.json <<'STUB_END'
     {"queries": ["stub"], "assays": [{"query": "stub", "obo_id": "EFO:0000000", "label": "stub"}], "unresolved": [], "obo_ids": ["EFO:0000000"], "total": 1}
