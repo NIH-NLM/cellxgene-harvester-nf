@@ -73,6 +73,8 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | `assay` | none | The assays (techniques) you **want**, by exact EFO label or EFO id: a list in a params file, or a comma-separated text. The choice is applied in step 4 (a dataset is kept if it has one of the assays) and again in step 5, to the cells: only the cells of these assays are counted on the filtered side, so every other assay, for example every spatial technique, is left out. An assay that does not resolve is skipped and listed under `unresolved` |
 | `organism` | `Homo sapiens` | Keep datasets of this organism. `''` keeps every organism |
 | `no_preprints` | `false` | `true` leaves preprints out |
+| `author_cell_type` | none | `curation.author_cell_type` for **every** dataset: the obs column of the author's cell types. When none, it is taken from the dataset's row in the CSV. For one dataset, such as a test; the test profile sets `subclass.full` |
+| `embedding` | none | `curation.embedding` for **every** dataset: the obsm key of the embedding, for example `X_umap`. When none, it is taken from the CSV. The test profile sets `X_umap` |
 | `h5ad` | none | A local h5ad file to read instead of each dataset's `h5ad_url`. For tests, with one dataset |
 | `h5ad_publish_dir` | none | **Temporary, to be set.** Folder the filtered h5ad files are copied to. The public S3 folder on the STRIDES account goes here. When none, `<run_name>/filtered_h5ad` |
 | `h5ad_url_prefix` | none | **Temporary, to be set.** Public address of that folder. Written to `filtered_h5ad_url` in each file and to `h5ad_url` in the CSV that sc-nsforest-qc-nf reads. When none, the local path |

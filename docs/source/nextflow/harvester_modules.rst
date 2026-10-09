@@ -184,6 +184,8 @@ Input:
 @param assay:        file from resolve_assay (the assays you want), or assets/NO_FILE for none
 @param organism:     organism to keep, or '' to keep every organism
 @param no_preprints: true leaves preprints out
+@param author_cell_type: curation.author_cell_type for every dataset (the obs column of the author's cell types), or '' to take it from the CSV
+@param embedding:    curation.embedding for every dataset (the obsm key, for example X_umap), or '' to take it from the CSV
 
 
 Output:
