@@ -7,7 +7,7 @@
  *
  *   0a-0d  resolve the organ, disease, age and (optional) assay to ontology ids
  *   1-3    fetch the CellxGene collections, flatten them, add the dataset details
- *   4      filter the datasets by tissue and disease
+ *   4      filter the datasets by tissue, disease and (optional) assay
  *   5      count the cells of each dataset from its h5ad file and write the filtered
  *          h5ad file                                       (one task for each dataset)
  *   6      delete the datasets that have no cells after filtering
@@ -123,7 +123,7 @@ workflow {
 
     // ---- step 4: filter the datasets -----------------------------------------------
     def filtered = filter_datasets_process(
-        complete_ch, uberon_ch, disease_ch, hsapdv_ch,
+        complete_ch, uberon_ch, disease_ch, hsapdv_ch, assay_ch,
         params.organism ?: '', params.no_preprints ? true : false
     )
 

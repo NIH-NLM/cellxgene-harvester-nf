@@ -14,7 +14,7 @@ resolve organ, disease, age, (assay)      steps 0a to 0d    the ontology ids tha
         |
 fetch collections -> flatten -> add details   steps 1 to 3    skipped if you give --all_datasets_complete_csv
         |
-filter datasets                            step 4            one JSON file for each dataset kept
+filter datasets (tissue, disease, assay)   step 4            one JSON file for each dataset kept
         |
 count cells, write filtered h5ad file      step 5            one task for each dataset
         |
@@ -70,7 +70,7 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | `organ` | none | UBERON label or id, for example `kidney`. Needed unless `uberon_json` is given |
 | `disease` | `normal` | Disease or phenotype label or id (PATO, MONDO) |
 | `min_age` | `15` | Minimum age in years. The HsapDv stages that start at or after it are kept |
-| `assay` | none | The assays (techniques) you **want**, by exact EFO label or EFO id: a list in a params file, or a comma-separated text. Only the cells of these assays are counted on the filtered side, so every other assay, for example every spatial technique, is left out. An assay that does not resolve is skipped and listed under `unresolved` |
+| `assay` | none | The assays (techniques) you **want**, by exact EFO label or EFO id: a list in a params file, or a comma-separated text. The choice is applied in step 4 (a dataset is kept if it has one of the assays) and again in step 5, to the cells: only the cells of these assays are counted on the filtered side, so every other assay, for example every spatial technique, is left out. An assay that does not resolve is skipped and listed under `unresolved` |
 | `organism` | `Homo sapiens` | Keep datasets of this organism. `''` keeps every organism |
 | `no_preprints` | `false` | `true` leaves preprints out |
 | `h5ad` | none | A local h5ad file to read instead of each dataset's `h5ad_url`. For tests, with one dataset |

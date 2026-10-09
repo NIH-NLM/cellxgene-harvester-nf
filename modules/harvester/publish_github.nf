@@ -9,15 +9,15 @@
  *          for example 2026-oct-07-1415-kidney-cellxgene-harvester-nf
  *
  * Folders (publish_env = prod, the default):
- *   data/prod/{organ}/cellxgene-harvester-nf/    the final JSON and CSV, and the
- *                                                organ's uberon JSON and CSV, all at
- *                                                the same level (no subfolder)
- *   data/prod/ontology_lookup_server/            the disease, hsapdv and assay JSON
- *                                                and CSV files shared by every organ
- *   The filtered h5ad files go to the public S3 bucket, not to GitHub.
  *
- * Folders (publish_env = test): the same under data/test/, and
- *   data/test/{organ}/filtered-h5ad/             the filtered h5ad files
+ * - data/prod/{organ}/cellxgene-harvester-nf/ holds the final JSON and CSV and the
+ *   organ's uberon JSON and CSV, all at the same level (no subfolder).
+ * - data/prod/ontology_lookup_server/ holds the disease, hsapdv and assay JSON and CSV
+ *   files shared by every organ.
+ * - The filtered h5ad files go to the public S3 bucket, not to GitHub.
+ *
+ * Folders (publish_env = test): the same under data/test/, and the filtered h5ad
+ * files go to data/test/{organ}/filtered-h5ad/.
  *
  * The step is skipped, with a warning, when github_token is not given.
  *

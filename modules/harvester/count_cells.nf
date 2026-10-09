@@ -22,8 +22,7 @@
  * @param hsapdv:         file from resolve_hsapdv
  * @param assay:           file from resolve_assay (the assays you want), or assets/NO_FILE for none
  * @param h5ad:           a local h5ad file to read instead of the dataset's h5ad_url, or assets/NO_FILE
- * @param url_prefix:     public address where the filtered h5ad files are published (a temporary
- *                        choice until the location is set), or '' for none
+ * @param url_prefix:     public address of the filtered h5ad files (temporary, until the location is set), or '' for none
  *
  * Output:
  * -------

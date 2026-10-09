@@ -1,11 +1,12 @@
 /**
  * Filter Datasets Module (step 4)
  *
- * Keeps the datasets whose tissue and disease ids are in the resolve files, and
- * writes one {dataset_id}.filtered.json for each dataset that is kept. The
- * choices made here (organism, preprints, and the three resolve files) are
- * recorded in each file. The age file is only recorded here; the age filter runs
- * in step 5.
+ * Keeps the datasets whose tissue, disease and (when an assay file is given)
+ * assay ids are in the resolve files, and writes one {dataset_id}.filtered.json
+ * for each dataset that is kept. The choices made here (organism, preprints, and
+ * the resolve files) are recorded in each file. The assay file is applied again to
+ * the cells in step 5, so both steps use one choice. The age file is only recorded
+ * here; the age filter runs in step 5.
  *
  * Input:
  * ------
@@ -13,6 +14,7 @@
  * @param uberon:       file from resolve_uberon
  * @param disease:      file from resolve_disease
  * @param hsapdv:       file from resolve_hsapdv
+ * @param assay:        file from resolve_assay (the assays you want), or assets/NO_FILE for none
  * @param organism:     organism to keep, or '' to keep every organism
  * @param no_preprints: true leaves preprints out
  *
@@ -30,6 +32,7 @@ process filter_datasets_process {
     path uberon
     path disease
     path hsapdv
+    path assay
     val organism
     val no_preprints
 
@@ -40,11 +43,12 @@ process filter_datasets_process {
     script:
     def organism_flag = organism ? "--organism '${organism}'" : ''
     def preprint_flag = no_preprints ? '--no-preprints' : ''
+    def assay_flag    = assay.name != 'NO_FILE' ? "--assay ${assay}" : ''
     """
     cellxgene-harvester --run-dir . filter-datasets ${complete_csv} \
         --output datasets \
         --uberon ${uberon} --disease ${disease} --hsapdv ${hsapdv} \
-        ${organism_flag} ${preprint_flag}
+        ${assay_flag} ${organism_flag} ${preprint_flag}
     """
 
     stub:

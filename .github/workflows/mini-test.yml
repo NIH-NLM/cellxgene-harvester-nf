@@ -82,6 +82,15 @@ jobs:
           assert isinstance(final, list) and len(final) == 1, final
           assert final[0]["dataset"]["dataset_id"] == rows[0]["dataset_id"]
           assert final[0]["filtered_cell_count"] == r["filtered_cell_count"]
+          # the assay choice is recorded in the filter choices, and every facet is a list of term
+          # objects whose counts are named for their side
+          assert final[0]["filter_choices"]["assay"]["assays"], "no assay choice recorded"
+          for facet in ("tissue", "assay", "cell_type", "disease", "development_stage", "sex"):
+              src, fil = final[0][f"source_{facet}"], final[0][f"filtered_{facet}"]
+              assert all(list(t) == ["ontology_id", "label", "source_count"] for t in src), facet
+              assert all(list(t) == ["ontology_id", "label", "filtered_count"] for t in fil), facet
+              assert sum(t["source_count"] for t in src) == final[0]["source_cell_count"], facet
+              assert sum(t["filtered_count"] for t in fil) == final[0]["filtered_cell_count"], facet
           # the shared resolve files, JSON and CSV, include the assay file named for the set
           for name in ("disease_normal", "hsapdv_adult_15", "assay_published"):
               for ext in (".json", ".csv"):
