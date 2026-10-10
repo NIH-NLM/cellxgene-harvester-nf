@@ -63,7 +63,9 @@ workflow {
         uberon_csv = sibling_csv(params.uberon_json)
     }
     else {
-        def resolved = resolve_uberon_process(params.organ)
+        // exact relation labels whose terms are added to the organ, for example 'contributes to morphology of'
+        def relations = !params.uberon_relation ? [] : (params.uberon_relation instanceof List ? params.uberon_relation : [params.uberon_relation.toString()])
+        def resolved = resolve_uberon_process(params.organ, relations)
         uberon_ch  = resolved.json.first()
         uberon_csv = resolved.csv
     }

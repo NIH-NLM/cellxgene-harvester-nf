@@ -68,6 +68,7 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | Parameter | Default | Meaning |
 |-----------|---------|---------|
 | `organ` | none | UBERON label or id, for example `kidney`. Needed unless `uberon_json` is given |
+| `uberon_relation` | none | Exact relation label(s) whose terms are added to the organ, each with its descendants: a list in a params file, for example `["contributes to morphology of"]`. The nose is not below the respiratory system but contributes to its morphology, so this adds it. The organ stays one root term, and the added terms are listed under `related_terms` in the `uberon_<organ>.json` file |
 | `disease` | `normal` | Disease or phenotype label or id (PATO, MONDO) |
 | `min_age` | `15` | Minimum age in years. The HsapDv stages that start at or after it are kept |
 | `assay` | none | The assays (techniques) you **want**, by exact EFO label or EFO id: a list in a params file, or a comma-separated text. The choice is applied in step 4 (a dataset is kept if it has one of the assays) and again in step 5, to the cells: only the cells of these assays are counted on the filtered side, so every other assay, for example every spatial technique, is left out. An assay that does not resolve is skipped and listed under `unresolved` |
@@ -89,7 +90,7 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | `hsapdv_json` | none | A file from `resolve-hsapdv` |
 | `assay_json` | none | A file from `resolve-assay` |
 | `all_datasets_complete_csv` | none | A file from `append-details`. Skips steps 1 to 3 |
-| `run_name` | `<today>-run`, for example `2026-10-06-run` | The run folder. It is made in the folder where you start the workflow, and all results go in it |
+| `run_name` | `cellxgene-harvester-nf` | The results folder: a **fixed** name, with no date and no run name. It is made in the folder where you start the workflow (on Lifebit, in the job's results), and all results go in it. The branch published to `nlm-ckn` is dated; this folder is not |
 | `publish_mode` | `copy` | How results are put in the run folder |
 | `container` | `ghcr.io/nih-nlm/cellxgene-harvester:latest` | The image. Use a version tag (`1.0.0`) for a release, or a branch name to test a branch: the image is built on every commit to cellxgene-harvester |
 | `count_max_forks` | `4` | Datasets counted at the same time |
@@ -99,7 +100,7 @@ Give `--run_name` on the command line or in a params file. The report files are 
 
 ## Results
 
-Everything goes to the run folder, `<run_name>/`, in the folder where you started the workflow:
+Everything goes to the results folder, `<run_name>/` (default `cellxgene-harvester-nf`), in the folder where you started the workflow:
 
 ```
 uberon_<organ>.json .csv .log          the resolve files (step 0)

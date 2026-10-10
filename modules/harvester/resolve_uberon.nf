@@ -8,13 +8,19 @@
  * UBERON:0002113. The step never asks a question: if the label does not match
  * exactly, the step stops with an error, so no organ is chosen for you.
  *
+ * relations are exact relation labels, for example 'contributes to morphology of':
+ * the terms that have that relation to the organ are added, with their descendants.
+ * The nose is not below the respiratory system but contributes to its morphology,
+ * so this adds it. The organ stays the one root term.
+ *
  * Input:
  * ------
- * @param query: UBERON label or id, for example 'kidney'
+ * @param query:     UBERON label or id, for example 'kidney'
+ * @param relations: list of exact relation labels to add, or an empty list for none
  *
  * Output:
  * -------
- * @emit json: uberon_{label}.json (queries, root_terms, obo_ids, terms, total)
+ * @emit json: uberon_{label}.json (queries, root_terms, obo_ids, terms, total; relations and related_terms when relations are given)
  * @emit csv:  uberon_{label}.csv
  * @emit log:  uberon_{label}.log
  */
@@ -24,6 +30,7 @@ process resolve_uberon_process {
 
     input:
     val query
+    val relations
 
     output:
     path "uberon_*.json", emit: json
@@ -32,8 +39,9 @@ process resolve_uberon_process {
 
     script:
     def slug = query.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
+    def relation_flags = relations.collect { r -> "--also-relation '" + r.toString().replace("'", "'\\''") + "'" }.join(' ')
     """
-    cellxgene-harvester --run-dir . resolve-uberon '${query}' --output-prefix uberon_${slug} < /dev/null \
+    cellxgene-harvester --run-dir . resolve-uberon '${query}' ${relation_flags} --output-prefix uberon_${slug} < /dev/null \
         || { echo "ERROR: '${query}' is not an exact UBERON label or id. Give the exact label or the UBERON id (--organ)." >&2; exit 1; }
     """
 
