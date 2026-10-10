@@ -437,15 +437,21 @@ The label must match one UBERON term exactly, or be an UBERON id such as
 UBERON:0002113. The step never asks a question: if the label does not match
 exactly, the step stops with an error, so no organ is chosen for you.
 
+relations are exact relation labels, for example 'contributes to morphology of':
+the terms that have that relation to the organ are added, with their descendants.
+The nose is not below the respiratory system but contributes to its morphology,
+so this adds it. The organ stays the one root term.
+
 
 Input:
 ~~~~~~
-@param query: UBERON label or id, for example 'kidney'
+@param query:     UBERON label or id, for example 'kidney'
+@param relations: list of exact relation labels to add, or an empty list for none
 
 
 Output:
 ~~~~~~~
-@emit json: uberon_{label}.json (queries, root_terms, obo_ids, terms, total)
+@emit json: uberon_{label}.json (queries, root_terms, obo_ids, terms, total; relations and related_terms when relations are given)
 @emit csv:  uberon_{label}.csv
 @emit log:  uberon_{label}.log
 

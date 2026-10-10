@@ -43,7 +43,7 @@ Quick Start
        --assay         "10x 3' v3,10x 3' v2,Smart-seq2" \
        --no_preprints  true
 
-Everything goes to ``<run_name>/``, for example ``2026-10-06-run/``, in the
+Everything goes to ``<run_name>/`` (a fixed name, default ``cellxgene-harvester-nf``), in the
 folder where the workflow was started.
 
 Repository Structure
