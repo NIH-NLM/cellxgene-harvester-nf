@@ -6,10 +6,9 @@ name: Mini kidney test
 # (3566 cells, nlm-ckn/data/test/kidney/h5ad). The resolve steps call OLS4. No
 # other h5ad file is downloaded.
 #
-# harvester_image must hold the h5ad counting (cellxgene-harvester after
-# 2026-10-07). It is built automatically on every commit to cellxgene-harvester
-# (Actions > "Build and Publish Docker image to GHCR"). The image is tagged
-# <branch name> and sha-<first 7 letters of the commit>.
+# harvester_image is the harvester image of this release (v1.0). To try a change of the harvester,
+# give its branch name or sha-<first 7 letters of the commit>: the image is built on every commit
+# to cellxgene-harvester (Actions > "Build and Publish Docker image to GHCR").
 #
 # With publish ticked, the results are also pushed to a new branch of
 # NIH-NLM/nlm-ckn under data/test/kidney/ (needs the secret NLM_CKN_TOKEN).
@@ -19,7 +18,7 @@ on:
     inputs:
       harvester_image:
         description: 'cellxgene-harvester image'
-        default: 'ghcr.io/nih-nlm/cellxgene-harvester:latest'
+        default: 'ghcr.io/nih-nlm/cellxgene-harvester:v1.0'
       publish:
         description: 'Also publish the results to a branch of NIH-NLM/nlm-ckn (data/test/kidney)'
         type: boolean
