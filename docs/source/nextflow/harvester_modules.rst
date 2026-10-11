@@ -55,6 +55,46 @@ Output:
 - ``params.run_name``
 
 
+Build Gene Mapping Process
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. rubric:: ``build_gene_mapping_process``
+
+*Source:* ``modules/harvester/build_gene_mapping.nf``
+
+Build Gene Mapping Module (step 5b)
+
+Builds the gene id to gene name table of the GENCODE release that the CellxGene
+datasets use, with its provenance file. The release is the one of the newest
+CellxGene schema (v48 today) unless --gencode_release is given.
+
+If the table of this release is already in data_dir/gencode and is intact (its provenance
+file names the release and holds the SHA-256 of the table), it is used and nothing is
+downloaded. Otherwise the GENCODE annotation is downloaded, its MD5 is checked against
+the one GENCODE publishes, and the table is built.
+
+The table has no date inside it, so the same release always gives the same bytes.
+The provenance file holds the source, the checksums and the date.
+
+
+Input:
+~~~~~~
+@param gtf: a local GENCODE annotation file to use instead of downloading it (for tests), or assets/NO_FILE
+@param existing: the gencode folder of data_dir, or assets/NO_FILE
+
+
+Output:
+~~~~~~~
+@emit csv:        gene_mapping_gencode_v<N>.csv
+@emit provenance: gene_mapping_gencode_v<N>.provenance.json
+
+**Params referenced:**
+
+- ``params.gencode_release``
+- ``params.publish_mode``
+- ``params.run_name``
+
+
 Count Cells Process
 ^^^^^^^^^^^^^^^^^^^
 
@@ -282,6 +322,12 @@ Folders (publish_env = prod, the default):
   organ's uberon JSON and CSV, all at the same level (no subfolder).
 - data/prod/ontology_lookup_server/ holds the disease, hsapdv and assay JSON and CSV
   files shared by every organ.
+- data/prod/gencode/ holds the gene id to gene name table of the GENCODE release and its
+  provenance file (gene_mapping_gencode_v<N>.csv and .provenance.json).
+- data/prod/cellxgene-datasets/ holds the three files of the CellxGene API snapshot
+  (collections_metadata.json, all_datasets.csv, all_datasets_complete.csv) and
+  api_snapshot.provenance.json. The files are the current ones: the date of the fetch is
+  inside the provenance file and in no path, and git keeps the older versions.
 - The filtered h5ad files go to the public S3 bucket, not to GitHub.
 
 Folders (publish_env = test): the same under data/test/, and the filtered h5ad
@@ -294,6 +340,8 @@ Input:
 ~~~~~~
 @param organ_files:  the final JSON and CSV and the organ's resolve files
 @param shared_files: the disease, hsapdv and assay resolve files (JSON and CSV)
+@param gencode_files: the gene table and its provenance file, or assets/NO_FILE
+@param datasets_files: the files of the API snapshot and its provenance file, or assets/NO_FILE
 @param h5ad:         the filtered h5ad files (copied only when publish_env is test)
 @param branch:       name of the branch to create
 @param organ:        organ slug, for example 'kidney'
@@ -306,8 +354,10 @@ Output:
 **Params referenced:**
 
 - ``params.github_token``
+- ``params.publish_datasets_dir``
 - ``params.publish_dest_dir``
 - ``params.publish_env``
+- ``params.publish_gencode_dir``
 - ``params.publish_repo``
 - ``params.publish_shared_dir``
 

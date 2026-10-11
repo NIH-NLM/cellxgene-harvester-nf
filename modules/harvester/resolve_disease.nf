@@ -24,6 +24,7 @@ process resolve_disease_process {
 
     input:
     val query
+    path existing, stageAs: 'existing'
 
     output:
     path "disease_*.json", emit: json
@@ -33,6 +34,8 @@ process resolve_disease_process {
     script:
     def slug = query.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     """
+    # a file that is already there and answers the same question is not made again
+    cp -L existing/disease_${slug}.json existing/disease_${slug}.csv . 2>/dev/null || true
     cellxgene-harvester --run-dir . resolve-disease '${query}' --output-prefix disease_${slug} < /dev/null \
         || { echo "ERROR: '${query}' is not an exact disease label or id. Give the exact label or the id (--disease)." >&2; exit 1; }
     """

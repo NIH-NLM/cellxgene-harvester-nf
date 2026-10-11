@@ -34,6 +34,7 @@ process resolve_assay_process {
 
     input:
     val queries
+    path existing, stageAs: 'existing'
 
     output:
     path "assay_*.json", emit: json
@@ -44,6 +45,8 @@ process resolve_assay_process {
     def slug = params.assay_name.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     def args = queries.collect { q -> "'" + q.toString().replace("'", "'\\''") + "'" }.join(' ')
     """
+    # a file that is already there and answers the same question is not made again
+    cp -L existing/assay_${slug}.json existing/assay_${slug}.csv . 2>/dev/null || true
     cellxgene-harvester --run-dir . resolve-assay ${args} --output-prefix assay_${slug} < /dev/null \
         || { echo "ERROR: no --assay value resolved. Each must be an exact EFO label or an EFO id." >&2; exit 1; }
     """

@@ -20,17 +20,23 @@ process append_details_process {
 
     input:
     path all_datasets_csv, stageAs: 'all_datasets.csv'
+    path provenance_in,    stageAs: 'api_snapshot.provenance.json'
+    path existing,         stageAs: 'existing'
 
     output:
-    path "all_datasets_complete.csv", emit: csv
+    path "all_datasets_complete.csv",      emit: csv
+    path "api_snapshot.provenance.json",   emit: provenance
 
     script:
     """
+    # not made again if it is already there and the API has not changed
+    cp -L existing/all_datasets_complete.csv . 2>/dev/null || true
     cellxgene-harvester --run-dir . append-details
     """
 
     stub:
     """
-    echo 'reference,dataset_id' > all_datasets_complete.csv
+    echo 'reference,dataset_id,cellxgene_schema_version' > all_datasets_complete.csv
+    cp -L api_snapshot.provenance.json prov.tmp && mv prov.tmp api_snapshot.provenance.json
     """
 }

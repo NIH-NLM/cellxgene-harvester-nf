@@ -31,6 +31,7 @@ process filter_datasets_process {
 
     input:
     path complete_csv
+    path snapshot_provenance, stageAs: 'snapshot_in.json'
     path uberon
     path disease
     path hsapdv
@@ -51,6 +52,8 @@ process filter_datasets_process {
     def type_flag     = author_cell_type ? "--author-cell-type '${author_cell_type}'" : ''
     def embedding_flag = embedding ? "--embedding '${embedding}'" : ''
     """
+    # the provenance file of the snapshot goes next to the input CSV, so that step 4 can record the date
+    if grep -q '"kind"' snapshot_in.json 2>/dev/null; then cp -L snapshot_in.json api_snapshot.provenance.json; fi
     cellxgene-harvester --run-dir . filter-datasets ${complete_csv} \
         --output datasets \
         --uberon ${uberon} --disease ${disease} --hsapdv ${hsapdv} \

@@ -28,12 +28,20 @@ include { filter_datasets_process }   from './modules/harvester/filter_datasets.
 include { count_cells_process }       from './modules/harvester/count_cells.nf'
 include { final_cleanup_process }     from './modules/harvester/final_cleanup.nf'
 include { export_datasets_csv_process } from './modules/harvester/export_datasets_csv.nf'
+include { build_gene_mapping_process } from './modules/harvester/build_gene_mapping.nf'
 include { publish_github_process }    from './modules/harvester/publish_github.nf'
 
 // A resolve file given as a parameter is published with its CSV when the CSV is next to it.
 def sibling_csv(json_path) {
     def csv_file = file(json_path.toString().replaceAll(/\.json$/, '.csv'))
     return csv_file.exists() ? channel.value(csv_file) : channel.empty()
+}
+
+// A folder of data_dir that holds files made before, or the empty placeholder when there is none.
+// The commands do not make again a file that is already there and answers the same question.
+def existing_dir(sub) {
+    def dir = params.data_dir ? file("${params.data_dir}/${sub}") : null
+    return channel.value(dir && dir.isDirectory() ? dir : file("${projectDir}/assets/NO_FILE"))
 }
 
 workflow {
@@ -65,7 +73,7 @@ workflow {
     else {
         // exact relation labels whose terms are added to the organ, for example 'contributes to morphology of'
         def relations = !params.uberon_relation ? [] : (params.uberon_relation instanceof List ? params.uberon_relation : [params.uberon_relation.toString()])
-        def resolved = resolve_uberon_process(params.organ, relations)
+        def resolved = resolve_uberon_process(params.organ, relations, existing_dir("${organ_slug}/cellxgene-harvester-nf"))
         uberon_ch  = resolved.json.first()
         uberon_csv = resolved.csv
     }
@@ -77,7 +85,7 @@ workflow {
         disease_csv = sibling_csv(params.disease_json)
     }
     else {
-        def resolved = resolve_disease_process(params.disease)
+        def resolved = resolve_disease_process(params.disease, existing_dir('ontology_lookup_server'))
         disease_ch  = resolved.json.first()
         disease_csv = resolved.csv
     }
@@ -89,7 +97,7 @@ workflow {
         hsapdv_csv = sibling_csv(params.hsapdv_json)
     }
     else {
-        def resolved = resolve_hsapdv_process(params.min_age)
+        def resolved = resolve_hsapdv_process(params.min_age, existing_dir('ontology_lookup_server'))
         hsapdv_ch  = resolved.json.first()
         hsapdv_csv = resolved.csv
     }
@@ -103,7 +111,7 @@ workflow {
     }
     else if (params.assay) {
         def assays = params.assay instanceof List ? params.assay : params.assay.toString().split(',').collect { s -> s.trim() }
-        def resolved = resolve_assay_process(channel.value(assays))
+        def resolved = resolve_assay_process(channel.value(assays), existing_dir('ontology_lookup_server'))
         assay_ch  = resolved.json.first()
         assay_csv = resolved.csv
     }
@@ -112,20 +120,31 @@ workflow {
     }
 
     // ---- steps 1 to 3: the dataset list --------------------------------------------
+    // The dataset list is a snapshot of the CellxGene API. Step 1 always asks the API; steps 2 and 3 do not
+    // make their files again when they are already in data_dir and the API has not changed since. The
+    // provenance file (the date, inside it, and the checksums of the files) goes on to step 4, which
+    // records it in every dataset file.
     def complete_ch
+    def snapshot_prov_ch
+    def datasets_files = channel.value(file("${projectDir}/assets/NO_FILE"))
     if (params.all_datasets_complete_csv) {
         complete_ch = channel.value(file(params.all_datasets_complete_csv, checkIfExists: true))
+        snapshot_prov_ch = channel.value(params.all_datasets_provenance
+            ? file(params.all_datasets_provenance, checkIfExists: true)
+            : file("${projectDir}/assets/NO_FILE"))
     }
     else {
-        def fetched   = fetch_collections_process()
-        def generated = generate_metadata_process(fetched.json)
-        def appended  = append_details_process(generated.csv)
-        complete_ch   = appended.csv
+        def fetched   = fetch_collections_process(existing_dir('cellxgene-datasets'))
+        def generated = generate_metadata_process(fetched.json, fetched.provenance, existing_dir('cellxgene-datasets'))
+        def appended  = append_details_process(generated.csv, generated.provenance, existing_dir('cellxgene-datasets'))
+        complete_ch      = appended.csv
+        snapshot_prov_ch = appended.provenance
+        datasets_files    = fetched.json.mix(generated.csv, appended.csv, appended.provenance).collect()
     }
 
     // ---- step 4: filter the datasets -----------------------------------------------
     def filtered = filter_datasets_process(
-        complete_ch, uberon_ch, disease_ch, hsapdv_ch, assay_ch,
+        complete_ch, snapshot_prov_ch, uberon_ch, disease_ch, hsapdv_ch, assay_ch,
         params.organism ?: '', params.no_preprints ? true : false,
         params.author_cell_type ?: '', params.embedding ?: ''
     )
@@ -138,6 +157,17 @@ workflow {
         filtered.records.flatten(), uberon_ch, disease_ch, hsapdv_ch, assay_ch,
         h5ad_ch, params.h5ad_url_prefix ?: ''
     )
+
+    // ---- step 5b: the gene id to gene name table of the GENCODE release ---------------------------
+    def gencode_files = channel.value(file("${projectDir}/assets/NO_FILE"))
+    if (params.build_gene_mapping) {
+        def gene_mapping = build_gene_mapping_process(
+            params.gene_mapping_gtf
+                ? channel.value(file(params.gene_mapping_gtf, checkIfExists: true))
+                : channel.value(file("${projectDir}/assets/NO_FILE")),
+            existing_dir('gencode'))
+        gencode_files = gene_mapping.csv.mix(gene_mapping.provenance).collect()
+    }
 
     // ---- steps 6 and 7: gather, clean up, export ---------------------------------------
     def cleaned = final_cleanup_process(counted.record.toList(), folder_name)
@@ -154,7 +184,7 @@ workflow {
             .mix(params.assay || params.assay_json ? assay_ch : channel.empty(), assay_csv)
             .collect()
         publish_github_process(
-            organ_files, shared_files,
+            organ_files, shared_files, gencode_files, datasets_files,
             counted.h5ad.collect().ifEmpty(file("${projectDir}/assets/NO_FILE")),
             branch, organ_slug
         )

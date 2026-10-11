@@ -18,6 +18,8 @@ filter datasets (tissue, disease, assay)   step 4            one JSON file for e
         |
 count cells, write filtered h5ad file      step 5            one task for each dataset
         |
+build the gene id to name table            step 5b           the GENCODE release of the CellxGene schema (v48 today)
+        |
 delete datasets with no cells              step 6
         |
 write the CSV for sc-nsforest-qc-nf        step 7
@@ -63,6 +65,24 @@ nextflow run main.nf -params-file params/example_kidney.json
 
 Without `--all_datasets_complete_csv` the run fetches every collection and adds the details of about 2000 datasets, which takes 10 to 20 minutes. Keep `all_datasets_complete.csv` from the run folder and give it to later runs.
 
+## Files made before
+
+With `--data_dir`, a file that is already there and answers the same question is not made again, and nothing is looked up for it. `data_dir` is a folder laid out like the nlm-ckn data tree, for example `data/prod` of a checkout:
+
+```
+<data_dir>/ontology_lookup_server/           disease_*, hsapdv_adult_*, assay_*
+<data_dir>/<organ>/cellxgene-harvester-nf/   uberon_<organ>.json
+<data_dir>/gencode/                          gene_mapping_gencode_v<N>.csv and .provenance.json
+<data_dir>/cellxgene-datasets/               collections_metadata.json, all_datasets.csv, all_datasets_complete.csv, api_snapshot.provenance.json
+```
+
+- A resolve file is used if it has the same queries (for the age file, the same minimum age).
+- The gene table is used if its provenance file names the release and holds the SHA-256 of the table.
+- Step 1 always asks the CellxGene API (a few seconds). If the answer is the same as the collections file in `cellxgene-datasets/`, steps 2 and 3 find their files already there and do not run (step 3 takes about ten minutes). Otherwise they run, and a new `api_snapshot.provenance.json` starts with the date of the fetch. The date is inside that file and in no path. Step 4 copies it into each dataset file as `filter_choices.snapshot`.
+- Without `--data_dir`, everything is made.
+
+**The gene table (step 5b)** is the gene id to gene name table of the GENCODE release of the newest CellxGene schema (v48 today), built from the GENCODE annotation with its MD5 checked. Each dataset file records the schema version of its h5ad file and the GENCODE release it implies in `gene_annotation`; step 5 warns when that release is not the required one.
+
 ## Parameters
 
 | Parameter | Default | Meaning |
@@ -84,6 +104,13 @@ Without `--all_datasets_complete_csv` the run fetches every collection and adds 
 | `publish_env` | `prod` | `prod`: the final JSON and CSV (and the organ's uberon files) to `data/prod/<organ>/cellxgene-harvester-nf/`, and the disease, hsapdv and assay files to `data/prod/ontology_lookup_server/`. `test` (set by the test profile): the same under `data/test/`, and the filtered h5ad files to `data/test/<organ>/filtered-h5ad/` |
 | `publish_dest_dir` | none | Replaces the organ folder above |
 | `publish_shared_dir` | none | Replaces the `ontology_lookup_server` folder above |
+| `publish_gencode_dir` | none | Replaces `data/<publish_env>/gencode` (the gene table and its provenance file) |
+| `publish_datasets_dir` | none | Replaces `data/<publish_env>/cellxgene-datasets` (the files of steps 1 to 3 and their provenance file) |
+| `data_dir` | none | A folder of files made before (see above) |
+| `build_gene_mapping` | `true` | Build the gene table of the GENCODE release (not again if it is in `data_dir`) |
+| `gencode_release` | newest schema's | The GENCODE release to build |
+| `gene_mapping_gtf` | none | A local GENCODE annotation file to use instead of downloading it (the test profile gives a made-up one) |
+| `all_datasets_provenance` | none | The `api_snapshot.provenance.json` that goes with `all_datasets_complete_csv` |
 | `assay_name` | `published` | Name of the assay file, `assay_<assay_name>.json` and `.csv`. Name the set of assays, not its first label. Another set of assays gets another name |
 | `uberon_json` | none | A file from `resolve-uberon`, used instead of resolving |
 | `disease_json` | none | A file from `resolve-disease` |
@@ -147,6 +174,8 @@ With `--github_token`, the run ends by pushing the final files and the resolve f
 ```
 data/<env>/<organ>/cellxgene-harvester-nf/   <organism>_<organ>_harvester_final.json and .csv, uberon_<organ>.json and .csv (all at one level)
 data/<env>/ontology_lookup_server/           disease_*.json/.csv, hsapdv_adult_*.json/.csv, assay_<assay_name>.json/.csv (shared by every organ)
+data/<env>/gencode/                          gene_mapping_gencode_v<N>.csv and .provenance.json (shared by every organ)
+data/<env>/cellxgene-datasets/               collections_metadata.json, all_datasets.csv, all_datasets_complete.csv, api_snapshot.provenance.json (the current files, no date in the path)
 data/test/<organ>/filtered-h5ad/             the filtered h5ad files (test only)
 ```
 
