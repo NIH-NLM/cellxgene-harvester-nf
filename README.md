@@ -119,7 +119,7 @@ With `--data_dir`, a file that is already there and answers the same question is
 | `all_datasets_complete_csv` | none | A file from `append-details`. Skips steps 1 to 3 |
 | `run_name` | `cellxgene-harvester-nf` | The results folder: a **fixed** name, with no date and no run name. It is made in the folder where you start the workflow (on Lifebit, in the job's results), and all results go in it. The branch published to `nlm-ckn` is dated; this folder is not |
 | `publish_mode` | `copy` | How results are put in the run folder |
-| `container` | `ghcr.io/nih-nlm/cellxgene-harvester:latest` | The image. Use a version tag (`1.0.0`) for a release, or a branch name to test a branch: the image is built on every commit to cellxgene-harvester |
+| `container` | `ghcr.io/nih-nlm/cellxgene-harvester:v1.0` | The harvester image of this release. To try a change of the harvester, give a branch name: the image is built on every commit to cellxgene-harvester |
 | `count_max_forks` | `4` | Datasets counted at the same time |
 | `count_cpus`, `count_memory` | `2`, `16 GB` | Resources for each dataset |
 
@@ -165,7 +165,7 @@ No number in these files has a thousands comma: a count is written as `11464`.
 | Workflow | When | What |
 |----------|------|------|
 | `Tests` | every pull request and push to main | lint, stub run, docs build |
-| `Mini kidney test` | **manual** (Actions tab > Run workflow) | the whole workflow on the mini kidney file with a real harvester image. The `harvester_image` input must hold the h5ad counting: the image is built automatically on every commit to cellxgene-harvester (tag `<branch name>` or `sha-<commit>`). Tick `publish` to also push the results to a branch of `NIH-NLM/nlm-ckn` under `data/test/kidney/` (needs the secret `NLM_CKN_TOKEN`) |
+| `Mini kidney test` | **manual** (Actions tab > Run workflow) | the whole workflow on the mini kidney file with a real harvester image. The `harvester_image` input is the harvester image (default `:v1.0`); to try a change of the harvester, give its branch name or `sha-<commit>`. Tick `publish` to also push the results to a branch of `NIH-NLM/nlm-ckn` under `data/test/kidney/` (needs the secret `NLM_CKN_TOKEN`) |
 
 ## Publishing (step 8)
 
