@@ -20,6 +20,7 @@ process resolve_hsapdv_process {
 
     input:
     val min_age
+    path existing, stageAs: 'existing'
 
     output:
     path "hsapdv_adult_*.json", emit: json
@@ -28,6 +29,8 @@ process resolve_hsapdv_process {
 
     script:
     """
+    # a file that is already there and answers the same question is not made again
+    cp -L existing/hsapdv_adult_${min_age}.json existing/hsapdv_adult_${min_age}.csv . 2>/dev/null || true
     cellxgene-harvester --run-dir . resolve-hsapdv --min-age ${min_age} --output-prefix hsapdv_adult_${min_age} < /dev/null
     """
 

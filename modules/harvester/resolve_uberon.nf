@@ -31,6 +31,7 @@ process resolve_uberon_process {
     input:
     val query
     val relations
+    path existing, stageAs: 'existing'
 
     output:
     path "uberon_*.json", emit: json
@@ -41,6 +42,8 @@ process resolve_uberon_process {
     def slug = query.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_').replaceAll(/^_+|_+$/, '')
     def relation_flags = relations.collect { r -> "--also-relation '" + r.toString().replace("'", "'\\''") + "'" }.join(' ')
     """
+    # a file that is already there and answers the same question is not made again
+    cp -L existing/uberon_${slug}.json existing/uberon_${slug}.csv . 2>/dev/null || true
     cellxgene-harvester --run-dir . resolve-uberon '${query}' ${relation_flags} --output-prefix uberon_${slug} < /dev/null \
         || { echo "ERROR: '${query}' is not an exact UBERON label or id. Give the exact label or the UBERON id (--organ)." >&2; exit 1; }
     """
