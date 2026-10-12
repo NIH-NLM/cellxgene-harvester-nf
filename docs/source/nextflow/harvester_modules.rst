@@ -70,8 +70,8 @@ CellxGene schema (v48 today) unless --gencode_release is given.
 
 If the table of this release is already in data_dir/gencode and is intact (its provenance
 file names the release and holds the SHA-256 of the table), it is used and nothing is
-downloaded. Otherwise the GENCODE annotation is downloaded, its MD5 is checked against
-the one GENCODE publishes, and the table is built.
+downloaded. Otherwise the GENCODE annotation and its NCBI Gene ID file are downloaded, the MD5 of each is checked
+against the one GENCODE publishes, and the table is built.
 
 The table has no date inside it, so the same release always gives the same bytes.
 The provenance file holds the source, the checksums and the date.
