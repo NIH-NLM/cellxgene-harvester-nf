@@ -165,6 +165,9 @@ workflow {
             params.gene_mapping_gtf
                 ? channel.value(file(params.gene_mapping_gtf, checkIfExists: true))
                 : channel.value(file("${projectDir}/assets/NO_FILE")),
+            params.gene_mapping_entrez
+                ? channel.value(file(params.gene_mapping_entrez, checkIfExists: true))
+                : channel.value(file("${projectDir}/assets/NO_FILE")),
             existing_dir('gencode'))
         gencode_files = gene_mapping.csv.mix(gene_mapping.provenance).collect()
     }

@@ -7,7 +7,7 @@
  *
  * If the table of this release is already in data_dir/gencode and is intact (its provenance
  * file names the release and holds the SHA-256 of the table), it is used and nothing is
- * downloaded. Otherwise the GENCODE annotation is downloaded, its MD5 is checked against
+ * downloaded. Otherwise the GENCODE annotation and its NCBI Gene ID file are downloaded, its MD5 is checked against
  * the one GENCODE publishes, and the table is built.
  *
  * The table has no date inside it, so the same release always gives the same bytes.
@@ -16,6 +16,7 @@
  * Input:
  * ------
  * @param gtf: a local GENCODE annotation file to use instead of downloading it (for tests), or assets/NO_FILE
+ * @param entrez: a local GENCODE EntrezGene metadata file (the NCBI Gene IDs), given with gtf, or assets/NO_FILE
  * @param existing: the gencode folder of data_dir, or assets/NO_FILE
  *
  * Output:
@@ -29,6 +30,7 @@ process build_gene_mapping_process {
 
     input:
     path gtf
+    path entrez
     path existing, stageAs: 'existing'
 
     output:
@@ -37,7 +39,7 @@ process build_gene_mapping_process {
 
     script:
     def release_flag = params.gencode_release ? "--gencode-release ${params.gencode_release}" : ''
-    def gtf_flag     = gtf.name != 'NO_FILE' ? "--gtf ${gtf}" : ''
+    def gtf_flag     = gtf.name != 'NO_FILE' ? "--gtf ${gtf} --entrez ${entrez}" : ''
     """
     # the table that is already there is not made again
     mkdir -p gene_mapping
@@ -49,7 +51,7 @@ process build_gene_mapping_process {
     def release = params.gencode_release ?: 48
     """
     mkdir gene_mapping
-    printf 'ensembl_gene_id,gene_name,gene_type,hgnc_id,has_symbol,gencode_release\\nENSG00000000001,GENEA,protein_coding,HGNC:1,True,${release}\\n' > gene_mapping/gene_mapping_gencode_v${release}.csv
+    printf 'ensembl_gene_id,gene_name,gene_type,hgnc_id,entrezgene_id,has_symbol,gencode_release\\nENSG00000000001,GENEA,protein_coding,HGNC:1,1001,True,${release}\\n' > gene_mapping/gene_mapping_gencode_v${release}.csv
     echo '{"gencode_release": ${release}, "stub": true}' > gene_mapping/gene_mapping_gencode_v${release}.provenance.json
     """
 }

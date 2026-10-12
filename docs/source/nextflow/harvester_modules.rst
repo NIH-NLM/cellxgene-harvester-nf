@@ -80,6 +80,7 @@ The provenance file holds the source, the checksums and the date.
 Input:
 ~~~~~~
 @param gtf: a local GENCODE annotation file to use instead of downloading it (for tests), or assets/NO_FILE
+@param entrez: a local GENCODE EntrezGene metadata file (the NCBI Gene IDs), given with gtf, or assets/NO_FILE
 @param existing: the gencode folder of data_dir, or assets/NO_FILE
 
 

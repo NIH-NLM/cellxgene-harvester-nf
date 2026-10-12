@@ -109,6 +109,7 @@ With `--data_dir`, a file that is already there and answers the same question is
 | `data_dir` | none | A folder of files made before (see above) |
 | `build_gene_mapping` | `true` | Build the gene table of the GENCODE release (not again if it is in `data_dir`) |
 | `gencode_release` | newest schema's | The GENCODE release to build |
+| `gene_mapping_entrez` | none | A local `gencode.vNN.metadata.EntrezGene.gz` (the NCBI Gene IDs), given together with `gene_mapping_gtf` |
 | `gene_mapping_gtf` | none | A local GENCODE annotation file to use instead of downloading it (the test profile gives a made-up one) |
 | `all_datasets_provenance` | none | The `api_snapshot.provenance.json` that goes with `all_datasets_complete_csv` |
 | `assay_name` | `published` | Name of the assay file, `assay_<assay_name>.json` and `.csv`. Name the set of assays, not its first label. Another set of assays gets another name |
