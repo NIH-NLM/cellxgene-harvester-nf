@@ -29,8 +29,10 @@ process build_gene_mapping_process {
     publishDir "${params.run_name}/gene_mapping", mode: params.publish_mode, saveAs: { fn -> file(fn).name }
 
     input:
-    path gtf
-    path entrez
+    // each input has its own folder: without a file, all three are assets/NO_FILE, and two
+    // input files may not have the same name
+    path gtf,      stageAs: 'gtf_in/*'
+    path entrez,   stageAs: 'entrez_in/*'
     path existing, stageAs: 'existing'
 
     output:
@@ -39,7 +41,9 @@ process build_gene_mapping_process {
 
     script:
     def release_flag = params.gencode_release ? "--gencode-release ${params.gencode_release}" : ''
-    def gtf_flag     = gtf.name != 'NO_FILE' ? "--gtf ${gtf} --entrez ${entrez}" : ''
+    // the name of a file staged in a folder includes the folder, so only its last part is compared
+    def gtf_name     = gtf.toString().tokenize('/').last()
+    def gtf_flag     = gtf_name != 'NO_FILE' ? "--gtf ${gtf} --entrez ${entrez}" : ''
     """
     # the table that is already there is not made again
     mkdir -p gene_mapping
