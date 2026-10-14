@@ -3,7 +3,8 @@
  *
  * Gathers the counted dataset files into one folder and deletes the files of the
  * datasets that have no cells after filtering (filtered_cell_count of 0). The
- * deleted dataset ids are in the log. A dataset that was never counted is not
+ * deleted dataset ids are in the log. The version of this workflow is written into each
+ * record as filter_choices.harvester_nf_version. A dataset that was never counted is not
  * in this folder.
  *
  * Input:
@@ -32,6 +33,14 @@ process final_cleanup_process {
     """
     mkdir ${folder}
     for f in ${records}; do cp -L "\$f" ${folder}/; done
+    # the version of this workflow goes into the record, beside the harvester version
+    python3 - <<'PY'
+import glob, json
+for path in glob.glob("${folder}/*.json"):
+    record = json.load(open(path))
+    record.setdefault("filter_choices", {})["harvester_nf_version"] = "${workflow.manifest.version}"
+    json.dump(record, open(path, "w"), indent=2)
+PY
     cellxgene-harvester --run-dir . final-cleanup ${folder}
     """
 
