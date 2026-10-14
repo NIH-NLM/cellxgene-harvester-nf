@@ -12,7 +12,7 @@
  *          h5ad file                                       (one task for each dataset)
  *   6      delete the datasets that have no cells after filtering
  *   7      write the final CSV (read by sc-nsforest-qc-nf) and the final JSON, side by side
- *   8      publish them, and the resolve files, to a new branch of the GitHub repository (needs --github_token)
+ *   8      publish them, and the resolve files, to a new branch of the GitHub repository (needs github_token, by default the masked environment variable github_token)
  *
  * All the choices are parameters; see nextflow.config and the README.
  */
@@ -56,6 +56,11 @@ workflow {
     def organism_slug = params.organism ? params.organism.toString().toLowerCase().replaceAll(/[^a-z0-9]+/, '_') : 'all_organisms'
     def folder_name   = "${organism_slug}_${organ_slug}_harvester"
     def csv_name      = "${organism_slug}_${organ_slug}_harvester_final.csv"
+
+    // a placeholder that the platform did not fill in would fail only at the very last step
+    if (params.github_token && params.github_token.toString().startsWith('{{')) {
+        error "github_token is still a placeholder (text in {{ }}): the platform did not fill it in. Leave github_token out of the params file and set the masked environment variable github_token instead."
+    }
 
     log.info "cellxgene-harvester-nf ${workflow.manifest.version}"
     def disease_name = params.disease_json ? file(params.disease_json).name : params.disease

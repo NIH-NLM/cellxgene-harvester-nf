@@ -99,7 +99,7 @@ With `--data_dir`, a file that is already there and answers the same question is
 | `h5ad` | none | A local h5ad file to read instead of each dataset's `h5ad_url`. For tests, with one dataset |
 | `h5ad_publish_dir` | none | **Temporary, to be set.** Folder the filtered h5ad files are copied to. The public S3 folder on the STRIDES account goes here. When none, `<run_name>/filtered_h5ad` |
 | `h5ad_url_prefix` | none | **Temporary, to be set.** Public address of that folder. Written to `filtered_h5ad_url` in each file and to `h5ad_url` in the CSV that sc-nsforest-qc-nf reads. When none, the local path |
-| `github_token` | none | A token that can push to `publish_repo`. Without it, step 8 (publish) is skipped with a warning |
+| `github_token` | the environment variable `github_token` | A token that can push to `publish_repo`. By default it is read from the masked environment variable `github_token` (on Lifebit set it there, and leave it out of the params file). Without a token, step 8 (publish) is skipped with a warning. A value in `{{ }}` that the platform did not fill in stops the run at the start |
 | `publish_repo` | `NIH-NLM/nlm-ckn` | Repository that gets the new branch |
 | `publish_env` | `prod` | `prod`: the final JSON and CSV (and the organ's uberon files) to `data/prod/<organ>/cellxgene-harvester-nf/`, and the disease, hsapdv and assay files to `data/prod/ontology_lookup_server/`. `test` (set by the test profile): the same under `data/test/`, and the filtered h5ad files to `data/test/<organ>/filtered-h5ad/` |
 | `publish_dest_dir` | none | Replaces the organ folder above |
