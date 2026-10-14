@@ -251,7 +251,8 @@ Final Cleanup Module (step 6)
 
 Gathers the counted dataset files into one folder and deletes the files of the
 datasets that have no cells after filtering (filtered_cell_count of 0). The
-deleted dataset ids are in the log. A dataset that was never counted is not
+deleted dataset ids are in the log. The version of this workflow is written into each
+record as filter_choices.harvester_nf_version. A dataset that was never counted is not
 in this folder.
 
 
